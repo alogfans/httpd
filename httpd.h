@@ -33,7 +33,7 @@
 #define MIME_LENGTH             16
 #define EXT_LENGTH              8
 #define BACKLOGS        		5
-#define WWWROOT 		  		"wwwroot/"
+#define WWWROOT 		  		"./wwwroot"
 #define SERVER_AGENT    		"Tiny HTTP Server"
 
 #define UNKNOWN_CONTENT         0
@@ -70,7 +70,16 @@ struct mime_t
 struct request_t
 {
     int type;
-    char uri[URI_BUFFER_LENGTH];
+    char filename[URI_BUFFER_LENGTH];
+    char cgiargs[URI_BUFFER_LENGTH];
+
+    // char property[PROPERTY_LENGTH][MAX_PROPERTY];
+    // char post_string[POST_STRING_LENGTH];
+};
+
+struct reply_t
+{
+
 };
 
 // backtrace.c

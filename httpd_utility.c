@@ -27,17 +27,6 @@ ssize_t httpd_read(int fd, char * buffer, size_t size)
 	}
 }
 
-ssize_t httpd_recv_peek(int fd, char * buffer, size_t size)
-{
-	while (1)
-	{
-		int nbytes = recv(fd, buffer, size, MSG_PEEK);
-		if (nbytes == -1 && errno == EINTR)
-			continue;
-		return nbytes;
-	}
-}
-
 ssize_t httpd_readline(int fd, char * buffer, size_t size)
 {
     ssize_t n, rc;
