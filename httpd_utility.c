@@ -7,24 +7,32 @@
 
 ssize_t httpd_write(int fd, char * buffer, size_t size)
 {
-	while (1)
-	{
-		int nbytes = write(fd, buffer, size);
-		if (nbytes == -1 && errno == EINTR)
-			continue;
-		return nbytes;
-	}
+    int nbytes;
+    
+again:
+    nbytes = write(fd, buffer, size);
+	if (nbytes == -1 && errno == EINTR)
+		goto again;
+
+    if (nbytes < 0)
+        TERMINATE_PROGRAM();
+
+	return nbytes;
 }
 
 ssize_t httpd_read(int fd, char * buffer, size_t size)
 {
-	while (1)
-	{
-		int nbytes = read(fd, buffer, size);
-		if (nbytes == -1 && errno == EINTR)
-			continue;
-		return nbytes;
-	}
+    int nbytes;
+
+again:
+    nbytes = read(fd, buffer, size);
+    if (nbytes == -1 && errno == EINTR)
+        goto again;
+
+    if (nbytes < 0)
+        TERMINATE_PROGRAM();
+
+    return nbytes;
 }
 
 ssize_t httpd_readline(int fd, char * buffer, size_t size)

@@ -12,7 +12,7 @@ void httpd_transfer_dynamic_content(int client_sock, struct request_t * request)
 	printf("DYN: filename = %s, cgiargs = [%s]\n", request->filename, request->cgiargs);
 
 	struct stat sbuf;
-    if (stat(request->filename, &sbuf) < 0)
+    if (stat(request->filename, &sbuf) < 0 || S_ISDIR(sbuf.st_mode))
     {
         httpd_transfer_error_content(client_sock, NOT_FOUND);
         return;
@@ -21,7 +21,7 @@ void httpd_transfer_dynamic_content(int client_sock, struct request_t * request)
     char buffer[REPLY_BUFFER_LENGTH], * emptylist[] = { NULL };
     sprintf(buffer, "HTTP/1.0 %d %s\r\n", 200, "OK");
     sprintf(buffer, "%s%s\r\n", buffer, SERVER_AGENT);
-    write(client_sock, buffer, strlen(buffer));
+    httpd_write(client_sock, buffer, strlen(buffer));
 
     if (fork() == 0) // child
     {

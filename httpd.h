@@ -12,6 +12,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <ctype.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -20,9 +21,9 @@
 #include <errno.h>
 #include <execinfo.h>
 
-#ifdef CONFIG_PTHREAD_SUPPORT
+#ifdef CONFIG_THREADING
 #include <pthread.h>
-#endif // CONFIG_PTHREAD_SUPPORT
+#endif // CONFIG_THREADING
 
 #define DEFAULT_PORT    		8080
 #define REQUEST_BUFFER_LENGTH   2048
@@ -30,7 +31,7 @@
 #define PROPERTY_LENGTH         256
 #define BACKTRACE_BUFFER_LENGTH	256
 #define URI_BUFFER_LENGTH       256
-#define MIME_LENGTH             16
+#define MIME_LENGTH             64
 #define EXT_LENGTH              8
 #define BACKLOGS        		5
 #define WWWROOT 		  		"./wwwroot"
@@ -89,6 +90,9 @@ void httpd_dump_backtrace();
 int httpd_init_service(ushort port);
 void httpd_accept_connection(int server_sock);
 void httpd_process_request(int client_sock);
+#ifdef CONFIG_THREADING
+void * httpd_process_request_threading(void * args);
+#endif // CONFIG_THREADING
 
 // packet.c
 void httpd_read_request(int client_sock, struct request_t * request);

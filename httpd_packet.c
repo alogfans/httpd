@@ -8,21 +8,37 @@
 void httpd_read_request(int client_sock, struct request_t * request)
 {
 	char line_buffer[REQUEST_BUFFER_LENGTH];
+	char type[PROPERTY_LENGTH], uri[PROPERTY_LENGTH];
 	httpd_readline(client_sock, line_buffer, REQUEST_BUFFER_LENGTH);
 
-	char * token_ptr = strtok(line_buffer, " ");
-	if (!token_ptr)
-		ALERT_PROGRAM();
-
-	if (strcasecmp(token_ptr, "GET") == 0)
+	int i, j;
+	for (i = 0, j = 0; i < strlen(line_buffer) && j < PROPERTY_LENGTH; i++, j++)
 	{
-		token_ptr = strtok(NULL, " ");
+		type[j] = line_buffer[i];
+		if (type[j] == ' ')
+		{
+			type[j] = 0;
+			break;
+		}
+	}
 
-		if (!strstr(token_ptr, "cgi-bin"))
+	for (i++, j = 0; i < strlen(line_buffer) && j < PROPERTY_LENGTH; i++, j++)
+	{
+		uri[j] = line_buffer[i];
+		if (uri[j] == ' ')
+		{
+			uri[j] = 0;
+			break;
+		}		
+	}
+
+	if (strcasecmp(type, "GET") == 0)
+	{
+		if (!strstr(uri, "cgi-bin"))
 		{
 			strcpy(request->filename, WWWROOT);
-			strcat(request->filename, token_ptr);
-			if (token_ptr[strlen(token_ptr) - 1] == '/')
+			strcat(request->filename, uri);
+			if (uri[strlen(uri) - 1] == '/')
 				strcat(request->filename, "index.html");
 			request->type = STATIC_CONTENT;
 		}
@@ -31,18 +47,19 @@ void httpd_read_request(int client_sock, struct request_t * request)
 			// dynamic content
 			strcpy(request->filename, WWWROOT);
 
-			char * token_ptr_backup = token_ptr;
-			while (* token_ptr != '?' && * token_ptr != 0)
-				token_ptr++;
+			int k;
+			for (k = 0; k < strlen(uri); k++)
+				if (k == '?')
+					break;
 
-			if (* token_ptr != 0)
+			if (k != strlen(uri))
 			{
-				strcpy(request->cgiargs, token_ptr + 1);
-				* token_ptr = 0;
-				strcat(request->filename, token_ptr_backup);
+				strcpy(request->cgiargs, uri + k + 1);
+				* (uri + k) = 0;
+				strcat(request->filename, uri);
 			}
 			else
-				strcat(request->filename, token_ptr_backup);
+				strcat(request->filename, uri);
 
 			request->type = DYNAMIC_CONTENT;
 		}

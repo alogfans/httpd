@@ -19,31 +19,27 @@ void httpd_transfer_static_content(int client_sock, struct request_t * request)
     }
 
     int length = sbuf.st_size;
-
-    FILE * fd = fopen(request->filename, "r");
-    if (fd == NULL)
-    {
-        httpd_transfer_error_content(client_sock, NOT_FOUND);
-        return;
-    }
+    int local_fd = open(request->filename, O_RDONLY);
+    if (local_fd < 0)
+        TERMINATE_PROGRAM();
 
     sprintf(buffer, "HTTP/1.0 %d %s\r\n", 200, "OK");
     sprintf(buffer, "%s%s\r\n", buffer, SERVER_AGENT);
     sprintf(buffer, "%sContent-length: %d\r\n", buffer, length);
     sprintf(buffer, "%sContent-type: %s\r\n", buffer, httpd_filetype(request->filename));
     sprintf(buffer, "%s\r\n", buffer);
-    write(client_sock, buffer, strlen(buffer));
+    httpd_write(client_sock, buffer, strlen(buffer));
 
     int remain = length;
 
     while (remain > REPLY_BUFFER_LENGTH)
     {
-        fread(buffer, REPLY_BUFFER_LENGTH, 1, fd);
-        write(client_sock, buffer, REPLY_BUFFER_LENGTH);
+        httpd_read(local_fd, buffer, REPLY_BUFFER_LENGTH);
+        httpd_write(client_sock, buffer, REPLY_BUFFER_LENGTH);
         remain -= REPLY_BUFFER_LENGTH;
     }
 
-    fread(buffer, remain, 1, fd);
-    write(client_sock, buffer, remain);
-    fclose(fd);
+    httpd_read(local_fd, buffer, remain);
+    httpd_write(client_sock, buffer, remain);
+    close(local_fd);
 }

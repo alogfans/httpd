@@ -11,6 +11,7 @@ const struct mime_t mimelist[] =
     { ".gif",  "image/gif"  },
     { ".png",  "image/png"  },
     { ".jpg",  "image/jpeg" },
+    { ".pdf",  "application/pdf" },
     { ".txt",  "text/plain" }
 }; 
 

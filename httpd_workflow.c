@@ -7,6 +7,9 @@
 
 int httpd_init_service(ushort port)
 {
+    // blocking SIGPIPE
+    signal(SIGPIPE, SIG_IGN);
+
     int server_sock; 
     struct sockaddr_in server_addr;
 
@@ -36,8 +39,32 @@ void httpd_accept_connection(int server_sock)
     if (client_sock < 0)
         TERMINATE_PROGRAM();
 
+#ifdef CONFIG_THREADING
+    pthread_t pid;
+    int * args = malloc(sizeof(int));
+    * args = client_sock;
+    if ((errno = pthread_create(&pid, NULL, httpd_process_request_threading, args)) != 0)
+        TERMINATE_PROGRAM();
+#else
     httpd_process_request(client_sock);
+#endif // CONFIG_THREADING
+    
 }
+
+#ifdef CONFIG_THREADING
+void * httpd_process_request_threading(void * args)
+{
+    int client_sock = * (int *) args;
+    free(args);
+
+    // to release its resourse
+    if ((errno = pthread_detach(pthread_self())) != 0)
+        TERMINATE_PROGRAM();
+
+    httpd_process_request(client_sock);
+    return NULL;
+}
+#endif // CONFIG_THREADING
 
 void httpd_process_request(int client_sock)
 {
