@@ -25,10 +25,12 @@ void httpd_transfer_dynamic_content(int client_sock, struct request_t * request)
 
     if (fork() == 0) // child
     {
+        // bug: is not thread-safe!!!
     	setenv("QUERY_STRING", request->cgiargs, 1);
     	dup2(client_sock, STDOUT_FILENO);
     	execve(request->filename, emptylist, environ);
     }
     // parent: waiting
     wait(NULL); 
+
 }
