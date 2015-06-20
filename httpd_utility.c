@@ -35,6 +35,30 @@ again:
     return nbytes;
 }
 
+__thread char   line_buf[REQUEST_BUFFER_LENGTH] = { 0 };
+__thread int    read_cnt = 0;
+__thread char * read_ptr = NULL;
+
+ssize_t httpd_readline_helper(int fd, char * ptr)
+{
+    if (read_cnt <= 0)
+    {
+again:
+        if ( (read_cnt = read(fd, line_buf, sizeof(line_buf))) < 0)
+        {
+            if (errno == EINTR)
+                goto again;
+            return -1;
+        }
+        else if (read_cnt == 0)
+            return 0;
+        read_ptr = line_buf;
+    }
+    read_cnt--;
+    *ptr = *read_ptr++;
+    return 1;
+}
+
 ssize_t httpd_readline(int fd, char * buffer, size_t size)
 {
     ssize_t n, rc;
@@ -42,8 +66,7 @@ ssize_t httpd_readline(int fd, char * buffer, size_t size)
 
     for (n = 1; n < size; n++)
     {
-    again:
-    	if ( (rc = read(fd, &c, 1)) == 1)
+    	if ( (rc = httpd_readline_helper(fd, &c)) == 1)
     	{
     		*ptr++ = c;
     		if (c == '\n')		// new line is stored
@@ -55,11 +78,7 @@ ssize_t httpd_readline(int fd, char * buffer, size_t size)
     		return n - 1;
     	}
     	else
-    	{
-    		if (errno == EINTR)
-    			goto again;
     		TERMINATE_PROGRAM();
-    	}
     }
 
     *ptr = 0;
